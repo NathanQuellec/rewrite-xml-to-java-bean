@@ -1,21 +1,21 @@
 package com.org;
 
 import com.org.model.Bean;
-import com.org.model.Job;
-import com.org.model.Step;
+import com.org.model.batch.IBatch;
+import com.org.model.batch.Job;
+import com.org.model.batch.Step;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
 import org.openrewrite.xml.XPathMatcher;
 import org.openrewrite.xml.XmlIsoVisitor;
-import org.openrewrite.xml.trait.Namespaced;
 import org.openrewrite.xml.tree.Xml;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
@@ -30,6 +30,7 @@ public class XmlToJavaConfig extends Recipe {
     public String getDescription() {
         return "Create new Java Config files from existing XML configs.";
     }
+
     // bean pattern
     private static final XPathMatcher BEAN_MATCHER = new XPathMatcher("//beans/bean[@id]");
 
@@ -71,28 +72,25 @@ public class XmlToJavaConfig extends Recipe {
             return doc;
         }
 
+        private <T extends IBatch> void setBatchName(Xml.Tag tag, T obj){
+            tag.getAttributes()
+                    .stream()
+                    .filter(atr -> atr.getKey().getName().equals("id"))
+                    .findFirst()
+                    .ifPresent(atr -> obj.setName(atr.getValue().getValue()));
+        }
+
         @Override
         public Xml.Tag visitTag(Xml.Tag tag, List<Job> jobs) {
             if(JOB_MATCHER_WITH_NAMESPACE.matches(getCursor()) || JOB_MATCHER.matches(getCursor())) {
                 job = new Job(); // new job each time we visit job marker
-                tag.getAttributes()
-                        .stream()
-                        .filter(atr -> atr.getKey().getName().equals("id"))
-                        .findFirst()
-                        .ifPresent(atr -> job.setName(atr.getValue().getValue()));
-
+                setBatchName(tag, job);
                 System.out.println("FIND JOB!!!! " + job.getName());
-
             }
 
             if(STEP_MATCHER_WITH_NAMESPACE.matches(getCursor()) || STEP_MATCHER.matches(getCursor())) {
                 step = new Step();
-                tag.getAttributes()
-                        .stream()
-                        .filter(atr -> atr.getKey().getName().equals("id"))
-                        .findFirst()
-                        .ifPresent(atr -> step.setName(atr.getValue().getValue()));
-
+                setBatchName(tag, step);
                 System.out.println("FIND STEP!!!! " + step.getName());
             }
             return super.visitTag(tag, jobs);
@@ -117,26 +115,13 @@ public class XmlToJavaConfig extends Recipe {
         public Xml.Attribute visitAttribute(Xml.Attribute attribute, List<Job> jobs) {
             String attributeValue = attribute.getValue().getValue();
             String attributeKey = attribute.getKey().getName();
-            if(attributeKey.equals("reader")) {
-                System.out.println("FIND READER!!!! " + attributeValue);
-                Bean readerBean = beans.stream().filter(bean -> bean.getName().equals(attributeValue)).findFirst().get();
-                Map<String, Bean> readerMap = new HashMap<>();
-                readerMap.put(attributeValue, readerBean);
-                step.setReader(readerMap);
-            }
-            if(attributeKey.equals("processor")) {
-                System.out.println("FIND PROCESSOR!!!! " + attributeValue);
-                Bean processorBean = beans.stream().filter(bean -> bean.getName().equals(attributeValue)).findFirst().get();
-                Map<String, Bean> processorMap = new HashMap<>();
-                processorMap.put(attributeValue, processorBean);
-                step.setProcessor(processorMap);
-            }
-            if(attributeKey.equals("writer")) {
-                System.out.println("FIND WRITER!!!! " + attributeValue);
-                Bean writerBean = beans.stream().filter(bean -> bean.getName().equals(attributeValue)).findFirst().get();
-                Map<String, Bean> writerMap = new HashMap<>();
-                writerMap.put(attributeValue, writerBean);
-                step.setWriter(writerMap);
+
+            if(attributeKey.matches("reader|processor|writer")) {
+                System.out.println("FIND " + attributeValue + " !!!");
+                Map<String, Bean> beanRef = beans.stream()
+                        .filter(b -> b.getName().equals(attributeValue))
+                        .collect(Collectors.toMap(b -> attributeValue, b -> b));
+                step.setBeanRef(attributeKey, beanRef);
             }
             if(attributeKey.equals("commit-interval")) {
                 System.out.println("FIND COMMIT INTERVAL!!!! " + attributeValue);
@@ -157,16 +142,21 @@ public class XmlToJavaConfig extends Recipe {
         @Override
         public Xml.Tag visitTag(Xml.Tag tag, List<Bean> beans) {
             if(BEAN_MATCHER.matches(getCursor())) {
+
                 Bean bean = new Bean();
-                tag.getAttributes().stream().filter(atr -> atr.getKey().getName().equals("id"))
-                        .findFirst()
-                        .ifPresent(atr -> bean.setName(atr.getValue().getValue()));
-                tag.getAttributes().stream().filter(atr -> atr.getKey().getName().equals("class"))
-                        .findFirst()
-                        .ifPresent(atr -> bean.setBeanClass(atr.getValue().getValue()));
+
+                tag.getAttributes().forEach(atr -> {
+                    String attributeName = atr.getKey().getName();
+                    String attributeValue = atr.getValue().getValue();
+                    if ("id".equals(attributeName)) {
+                        bean.setName(attributeValue);
+                    } else if ("class".equals(attributeName)) {
+                        bean.setBeanClass(attributeValue);
+                    }
+                });
 
                 beans.add(bean);
-                System.out.println("FIND BEANS!!!! " + bean.getName());
+                System.out.println("FIND BEAN!!!! " + bean.getName());
             }
             return super.visitTag(tag, beans);
         }
