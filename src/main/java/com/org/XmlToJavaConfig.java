@@ -144,7 +144,6 @@ public class XmlToJavaConfig extends Recipe {
             if(BEAN_MATCHER.matches(getCursor())) {
 
                 Bean bean = new Bean();
-
                 tag.getAttributes().forEach(atr -> {
                     String attributeName = atr.getKey().getName();
                     String attributeValue = atr.getValue().getValue();
@@ -154,7 +153,6 @@ public class XmlToJavaConfig extends Recipe {
                         bean.setBeanClass(attributeValue);
                     }
                 });
-
                 beans.add(bean);
                 System.out.println("FIND BEAN!!!! " + bean.getName());
             }
