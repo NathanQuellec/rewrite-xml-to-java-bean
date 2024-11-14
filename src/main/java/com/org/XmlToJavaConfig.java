@@ -59,8 +59,8 @@ public class XmlToJavaConfig extends Recipe {
     }
 
     public static class BatchJobsVisitor extends XmlIsoVisitor<List<Job>> {
-        Job job = null;
-        Step step = null;
+        Job job = new Job();
+        Step step = new Step();
         List<Bean> beans = new ArrayList<>();
 
         @Override
