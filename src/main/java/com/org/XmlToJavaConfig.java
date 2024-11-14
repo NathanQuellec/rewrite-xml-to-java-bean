@@ -42,9 +42,10 @@ public class XmlToJavaConfig extends Recipe {
     public XmlIsoVisitor<ExecutionContext> getVisitor() {
 
 
-        BatchJob job = new BatchJob();
-
         return new XmlIsoVisitor<ExecutionContext>(){
+
+            BatchJob job = null;
+            Step step = null;
 
             @Override
             public Xml.Document visitDocument(Xml.Document document, ExecutionContext executionContext) {
@@ -56,57 +57,62 @@ public class XmlToJavaConfig extends Recipe {
             @Override
             public Xml.Tag visitTag(Xml.Tag tag, ExecutionContext executionContext) {
                 if(JOB_MATCHER_WITH_NAMESPACE.matches(getCursor()) || JOB_MATCHER.matches(getCursor())) {
-                    String jobName = tag.getAttributes()
+                    job = new BatchJob(); // new job each time we visit job marker
+                    tag.getAttributes()
                             .stream()
                             .filter(atr -> atr.getKey().getName().equals("id"))
                             .findFirst()
-                            .get()
-                            .getValue()
-                            .getValue();
+                            .ifPresent(atr -> job.setName(atr.getValue().getValue()));
 
-                    System.out.println("FIND JOB!!!! " + jobName);
-                    job.setName(jobName);
+                    System.out.println("FIND JOB!!!! " + job.getName());
 
                 }
 
                 if(STEP_MATCHER_WITH_NAMESPACE.matches(getCursor()) || STEP_MATCHER.matches(getCursor())) {
-                    String stepName = tag.getAttributes()
+                    step = new Step();
+                    tag.getAttributes()
                             .stream()
                             .filter(atr -> atr.getKey().getName().equals("id"))
                             .findFirst()
-                            .get()
-                            .getValue()
-                            .getValue();
-                    System.out.println("FIND STEP!!!! " + stepName);
-                    job.addStep(stepName);
+                            .ifPresent(atr -> step.setName(atr.getValue().getValue()));
+
+                    System.out.println("FIND STEP!!!! " + step.getName());
                 }
                 return super.visitTag(tag, executionContext);
             }
 
+            @Override
             public Xml.Tag.Closing visitTagClosing(Xml.Tag.Closing tagClosing, ExecutionContext executionContext) {
                 if(JOB_MATCHER_WITH_NAMESPACE.matches(getCursor()) || JOB_MATCHER.matches(getCursor())) {
                     jobs.add(job);
                     System.out.println("-----END OF JOB-----");
                 }
+
+                if(STEP_MATCHER_WITH_NAMESPACE.matches(getCursor()) || STEP_MATCHER.matches(getCursor())) {
+                    job.addStep(step);
+                    System.out.println("-----END OF STEP-----");
+                }
                 return super.visitTagClosing(tagClosing, executionContext);
             }
+
 
             @Override
             public Xml.Attribute visitAttribute(Xml.Attribute attribute, ExecutionContext executionContext) {
                 if(attribute.getKey().getName().equals("reader")) {
                     System.out.println("FIND READER!!!! " + attribute.getValue().getValue());
-                    job.setReader(attribute.getValue().getValue());
+                    step.setReader(attribute.getValue().getValue());
                 }
                 if(attribute.getKey().getName().equals("processor")) {
                     System.out.println("FIND PROCESSOR!!!! " + attribute.getValue().getValue());
-                    job.setProcessor(attribute.getValue().getValue());
+                    step.setProcessor(attribute.getValue().getValue());
                 }
                 if(attribute.getKey().getName().equals("writer")) {
                     System.out.println("FIND WRITER!!!! " + attribute.getValue().getValue());
-                    job.setWriter(attribute.getValue().getValue());
+                    step.setWriter(attribute.getValue().getValue());
                 }
                 if(attribute.getKey().getName().equals("commit-interval")) {
                     System.out.println("FIND COMMIT INTERVAL!!!! " + attribute.getValue().getValue());
+                    step.setCommitInterval(attribute.getValue().getValue());
                 }
                 return super.visitAttribute(attribute, executionContext);
             }
@@ -118,16 +124,24 @@ public class XmlToJavaConfig extends Recipe {
     @Setter
     private static class BatchJob{
         private String name;
-        private List<String> steps = new ArrayList<>();
+        private List<Step> steps = new ArrayList<>();
+
+        public void addStep(Step step){
+            steps.add(step);
+        }
+    }
+
+    @Getter
+    @Setter
+    private static class Step{
+        private String name;
         @Nullable
         private String reader;
         @Nullable
         private String processor;
         @Nullable
         private String writer;
-
-        public void addStep(String step){
-            steps.add(step);
-        }
+        @Nullable
+        private String commitInterval;
     }
 }

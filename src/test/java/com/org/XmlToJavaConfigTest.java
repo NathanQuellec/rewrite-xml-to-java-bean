@@ -5,7 +5,6 @@ import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 import org.openrewrite.xml.XmlParser;
 
-import static org.openrewrite.java.Assertions.java;
 import static org.openrewrite.xml.Assertions.xml;
 
 public class XmlToJavaConfigTest implements RewriteTest {
@@ -49,11 +48,16 @@ public class XmlToJavaConfigTest implements RewriteTest {
                                           </batch:tasklet>
                                       </batch:step>
                                   </batch:job>
-                                  
+           
                                   <batch:job id="managerJob">
                                       <batch:step id="step2">
                                           <batch:tasklet>
                                               <batch:chunk reader="managerReader" writer="managerWriter" commit-interval="10"/>
+                                          </batch:tasklet>
+                                      </batch:step>
+                                      <batch:step id="step3">
+                                          <batch:tasklet>
+                                              <batch:chunk reader="teacherReader" processor="teacherProcessor" writer="teacherWriter"/>
                                           </batch:tasklet>
                                       </batch:step>
                                   </batch:job>
