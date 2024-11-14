@@ -49,6 +49,14 @@ public class XmlToJavaConfigTest implements RewriteTest {
                                           </batch:tasklet>
                                       </batch:step>
                                   </batch:job>
+                                  
+                                  <batch:job id="managerJob">
+                                      <batch:step id="step2">
+                                          <batch:tasklet>
+                                              <batch:chunk reader="managerReader" writer="managerWriter" commit-interval="10"/>
+                                          </batch:tasklet>
+                                      </batch:step>
+                                  </batch:job>
               
                                   <!-- Reader and Writer Beans -->
                                   <bean id="personReader" class="org.springframework.batch.item.file.FlatFileItemReader">
