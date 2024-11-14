@@ -146,7 +146,6 @@ public class XmlToJavaConfig extends Recipe {
         @Override
         public Xml.Tag visitTag(Xml.Tag tag, List<Bean> beans) {
             if(BEAN_MATCHER.matches(getCursor())) {
-            //if(tag.getName().equals("bean")) {
                 Bean bean = new Bean();
                 tag.getAttributes().stream().filter(atr -> atr.getKey().getName().equals("id"))
                         .findFirst()
