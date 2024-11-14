@@ -1,9 +1,9 @@
 package com.org;
 
-import org.openrewrite.jgit.annotations.Nullable;
+import com.org.model.Bean;
+import com.org.model.Job;
+import com.org.model.Step;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.Value;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
@@ -27,10 +27,13 @@ public class XmlToJavaConfig extends Recipe {
     public String getDescription() {
         return "Create new Java Config files from existing XML configs.";
     }
+    // bean pattern
+    private static final XPathMatcher BEAN_MATCHER = new XPathMatcher("//beans/bean[@id]");
 
     // job pattern
     private static final XPathMatcher JOB_MATCHER_WITH_NAMESPACE = new XPathMatcher("//beans/batch:job");
     private static final XPathMatcher JOB_MATCHER = new XPathMatcher("//beans/job");
+
 
     //step pattern
     private static final XPathMatcher STEP_MATCHER_WITH_NAMESPACE = new XPathMatcher("//beans/batch:job/batch:step");
@@ -38,36 +41,39 @@ public class XmlToJavaConfig extends Recipe {
 
     @Override
     public XmlIsoVisitor<ExecutionContext> getVisitor() {
-
+        List<Job> jobs = new ArrayList<>();
 
         return new XmlIsoVisitor<ExecutionContext>(){
 
             @Override
             public Xml.Document visitDocument(Xml.Document document, ExecutionContext executionContext) {
                 BatchJobsVisitor batchJobsVisitor = new BatchJobsVisitor();
-                List<BatchJob> jobs = new ArrayList<>();
                 batchJobsVisitor.visitDocument(document, jobs);
+
+
                 return super.visitDocument(document, executionContext);
             }
-
         };
     }
 
-    public static class BatchJobsVisitor extends XmlIsoVisitor<List<BatchJob>> {
-        BatchJob job = null;
+    public static class BatchJobsVisitor extends XmlIsoVisitor<List<Job>> {
+        Job job = null;
         Step step = null;
+        List<Bean> beans = new ArrayList<>();
 
         @Override
-        public Xml.Document visitDocument(Xml.Document document, List<BatchJob> jobs) {
+        public Xml.Document visitDocument(Xml.Document document, List<Job> jobs) {
+            BeansVisitor beansVisitor = new BeansVisitor();
+            beansVisitor.visitDocument(document, beans);
             Xml.Document doc = super.visitDocument(document, jobs);
             System.out.println(jobs.size());
             return doc;
         }
 
         @Override
-        public Xml.Tag visitTag(Xml.Tag tag, List<BatchJob> jobs) {
+        public Xml.Tag visitTag(Xml.Tag tag, List<Job> jobs) {
             if(JOB_MATCHER_WITH_NAMESPACE.matches(getCursor()) || JOB_MATCHER.matches(getCursor())) {
-                job = new BatchJob(); // new job each time we visit job marker
+                job = new Job(); // new job each time we visit job marker
                 tag.getAttributes()
                         .stream()
                         .filter(atr -> atr.getKey().getName().equals("id"))
@@ -92,7 +98,7 @@ public class XmlToJavaConfig extends Recipe {
         }
 
         @Override
-        public Xml.Tag.Closing visitTagClosing(Xml.Tag.Closing tagClosing, List<BatchJob> jobs) {
+        public Xml.Tag.Closing visitTagClosing(Xml.Tag.Closing tagClosing, List<Job> jobs) {
             if(JOB_MATCHER_WITH_NAMESPACE.matches(getCursor()) || JOB_MATCHER.matches(getCursor())) {
                 jobs.add(job);
                 System.out.println("-----END OF JOB-----");
@@ -107,49 +113,53 @@ public class XmlToJavaConfig extends Recipe {
 
 
         @Override
-        public Xml.Attribute visitAttribute(Xml.Attribute attribute, List<BatchJob> jobs) {
-            if(attribute.getKey().getName().equals("reader")) {
-                System.out.println("FIND READER!!!! " + attribute.getValue().getValue());
-                step.setReader(attribute.getValue().getValue());
+        public Xml.Attribute visitAttribute(Xml.Attribute attribute, List<Job> jobs) {
+            String attributeValue = attribute.getValue().getValue();
+            String attributeKey = attribute.getKey().getName();
+            if(attributeKey.equals("reader")) {
+                System.out.println("FIND READER!!!! " + attributeValue);
+                step.setReader(attributeValue);
             }
-            if(attribute.getKey().getName().equals("processor")) {
-                System.out.println("FIND PROCESSOR!!!! " + attribute.getValue().getValue());
-                step.setProcessor(attribute.getValue().getValue());
+            if(attributeKey.equals("processor")) {
+                System.out.println("FIND PROCESSOR!!!! " + attributeValue);
+                step.setProcessor(attributeValue);
             }
-            if(attribute.getKey().getName().equals("writer")) {
-                System.out.println("FIND WRITER!!!! " + attribute.getValue().getValue());
-                step.setWriter(attribute.getValue().getValue());
+            if(attributeKey.equals("writer")) {
+                System.out.println("FIND WRITER!!!! " + attributeValue);
+                step.setWriter(attributeValue);
             }
-            if(attribute.getKey().getName().equals("commit-interval")) {
-                System.out.println("FIND COMMIT INTERVAL!!!! " + attribute.getValue().getValue());
-                step.setCommitInterval(attribute.getValue().getValue());
+            if(attributeKey.equals("commit-interval")) {
+                System.out.println("FIND COMMIT INTERVAL!!!! " + attributeValue);
+                step.setCommitInterval(attributeValue);
             }
             return super.visitAttribute(attribute, jobs);
         }
     }
 
-    @Getter
-    @Setter
-    public static class BatchJob{
-        private String name;
-        private List<Step> steps = new ArrayList<>();
+    public static class BeansVisitor extends XmlIsoVisitor<List<Bean>> {
 
-        public void addStep(Step step){
-            steps.add(step);
+
+        @Override
+        public Xml.Document visitDocument(Xml.Document document, List<Bean> beans) {
+            Xml.Document doc = super.visitDocument(document, beans);
+            System.out.println(beans.size());
+            return doc;
         }
-    }
+        @Override
+        public Xml.Tag visitTag(Xml.Tag tag, List<Bean> beans) {
+            if(tag.getName().equals("bean")) {
+                Bean bean = new Bean();
+                tag.getAttributes().stream().filter(atr -> atr.getKey().getName().equals("id"))
+                        .findFirst()
+                        .ifPresent(atr -> bean.setName(atr.getValue().getValue()));
+                tag.getAttributes().stream().filter(atr -> atr.getKey().getName().equals("class"))
+                        .findFirst()
+                        .ifPresent(atr -> bean.setBeanClass(atr.getValue().getValue()));
 
-    @Getter
-    @Setter
-    public static class Step{
-        private String name;
-        @Nullable
-        private String reader;
-        @Nullable
-        private String processor;
-        @Nullable
-        private String writer;
-        @Nullable
-        private String commitInterval;
+                beans.add(bean);
+                System.out.println("FIND BEANS!!!! " + bean.getName());
+            }
+            return super.visitTag(tag, beans);
+        }
     }
 }
