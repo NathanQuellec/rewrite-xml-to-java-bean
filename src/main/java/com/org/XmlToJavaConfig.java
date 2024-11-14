@@ -34,7 +34,6 @@ public class XmlToJavaConfig extends Recipe {
     private static final XPathMatcher JOB_MATCHER_WITH_NAMESPACE = new XPathMatcher("//beans/batch:job");
     private static final XPathMatcher JOB_MATCHER = new XPathMatcher("//beans/job");
 
-
     //step pattern
     private static final XPathMatcher STEP_MATCHER_WITH_NAMESPACE = new XPathMatcher("//beans/batch:job/batch:step");
     private static final XPathMatcher STEP_MATCHER = new XPathMatcher("//beans/job/step");
@@ -138,7 +137,6 @@ public class XmlToJavaConfig extends Recipe {
 
     public static class BeansVisitor extends XmlIsoVisitor<List<Bean>> {
 
-
         @Override
         public Xml.Document visitDocument(Xml.Document document, List<Bean> beans) {
             Xml.Document doc = super.visitDocument(document, beans);
@@ -147,7 +145,8 @@ public class XmlToJavaConfig extends Recipe {
         }
         @Override
         public Xml.Tag visitTag(Xml.Tag tag, List<Bean> beans) {
-            if(tag.getName().equals("bean")) {
+            if(BEAN_MATCHER.matches(getCursor())) {
+            //if(tag.getName().equals("bean")) {
                 Bean bean = new Bean();
                 tag.getAttributes().stream().filter(atr -> atr.getKey().getName().equals("id"))
                         .findFirst()
