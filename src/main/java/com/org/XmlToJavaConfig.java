@@ -9,10 +9,13 @@ import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
 import org.openrewrite.xml.XPathMatcher;
 import org.openrewrite.xml.XmlIsoVisitor;
+import org.openrewrite.xml.trait.Namespaced;
 import org.openrewrite.xml.tree.Xml;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
@@ -48,7 +51,6 @@ public class XmlToJavaConfig extends Recipe {
             public Xml.Document visitDocument(Xml.Document document, ExecutionContext executionContext) {
                 BatchJobsVisitor batchJobsVisitor = new BatchJobsVisitor();
                 batchJobsVisitor.visitDocument(document, jobs);
-
 
                 return super.visitDocument(document, executionContext);
             }
@@ -117,15 +119,24 @@ public class XmlToJavaConfig extends Recipe {
             String attributeKey = attribute.getKey().getName();
             if(attributeKey.equals("reader")) {
                 System.out.println("FIND READER!!!! " + attributeValue);
-                step.setReader(attributeValue);
+                Bean readerBean = beans.stream().filter(bean -> bean.getName().equals(attributeValue)).findFirst().get();
+                Map<String, Bean> readerMap = new HashMap<>();
+                readerMap.put(attributeValue, readerBean);
+                step.setReader(readerMap);
             }
             if(attributeKey.equals("processor")) {
                 System.out.println("FIND PROCESSOR!!!! " + attributeValue);
-                step.setProcessor(attributeValue);
+                Bean processorBean = beans.stream().filter(bean -> bean.getName().equals(attributeValue)).findFirst().get();
+                Map<String, Bean> processorMap = new HashMap<>();
+                processorMap.put(attributeValue, processorBean);
+                step.setProcessor(processorMap);
             }
             if(attributeKey.equals("writer")) {
                 System.out.println("FIND WRITER!!!! " + attributeValue);
-                step.setWriter(attributeValue);
+                Bean writerBean = beans.stream().filter(bean -> bean.getName().equals(attributeValue)).findFirst().get();
+                Map<String, Bean> writerMap = new HashMap<>();
+                writerMap.put(attributeValue, writerBean);
+                step.setWriter(writerMap);
             }
             if(attributeKey.equals("commit-interval")) {
                 System.out.println("FIND COMMIT INTERVAL!!!! " + attributeValue);

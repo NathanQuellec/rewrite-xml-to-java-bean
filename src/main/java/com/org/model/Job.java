@@ -11,8 +11,6 @@ import java.util.List;
 public class Job{
     private String name;
     private List<Step> steps = new ArrayList<>();
-    private List<Bean> beans = new ArrayList<>();
-
     public void addStep(Step step){
         steps.add(step);
     }
