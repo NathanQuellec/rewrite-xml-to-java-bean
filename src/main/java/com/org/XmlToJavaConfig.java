@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
-public class XmlToJavaConfig extends ScanningRecipe<List<Job>> {
+public class XmlToJavaConfig extends ScanningRecipe<XmlToJavaConfig.Scanned> {
 
     @Option(displayName = "Relative file path",
             description = "File path of new file.",
@@ -50,18 +50,22 @@ public class XmlToJavaConfig extends ScanningRecipe<List<Job>> {
     private static final XPathMatcher STEP_MATCHER_WITH_NAMESPACE = new XPathMatcher("//beans/batch:job/batch:step");
     private static final XPathMatcher STEP_MATCHER = new XPathMatcher("//beans/job/step");
 
-    @Override
-    public List<Job> getInitialValue(ExecutionContext ctx) {
-        return new ArrayList<>();
+    public static class Scanned {
+        List<Job> jobs = new ArrayList<>();
     }
 
     @Override
-    public TreeVisitor<?, ExecutionContext> getScanner(List<Job> jobs) {
+    public Scanned getInitialValue(ExecutionContext ctx) {
+        return new Scanned();
+    }
+
+    @Override
+    public TreeVisitor<?, ExecutionContext> getScanner(Scanned acc) {
         return new XmlIsoVisitor<ExecutionContext>() {
             @Override
             public Xml.Document visitDocument(Xml.Document document, ExecutionContext executionContext) {
                 BatchJobsVisitor batchJobsVisitor = new BatchJobsVisitor();
-                batchJobsVisitor.visitDocument(document, jobs);
+                batchJobsVisitor.visitDocument(document, acc.jobs);
 
                 return super.visitDocument(document, executionContext);
             }
@@ -69,14 +73,14 @@ public class XmlToJavaConfig extends ScanningRecipe<List<Job>> {
     }
 
     @Override
-    public Collection<PlainText> generate(List<Job> jobs, ExecutionContext ctx) {
+    public Collection<PlainText> generate(Scanned acc, ExecutionContext ctx) {
         List<PlainText> generated = new LinkedList<>();
         PlainTextParser parser = new PlainTextParser();
         parser.parse("test")
-                .map(brandNewFile -> (PlainText) brandNewFile.withSourcePath(Paths.get("src", "main", "java", "test.java")))
+                .map(brandNewFile -> (PlainText) brandNewFile.withSourcePath(Paths.get("test.java")))
                 .forEach(generated::add);
 
-        if(Files.exists(Paths.get("src", "main", "java", "test.java"))){
+        if(Files.exists(Paths.get("test.java"))){
             System.out.println("OK FILE!!!");
         }
         return generated;
@@ -134,7 +138,6 @@ public class XmlToJavaConfig extends ScanningRecipe<List<Job>> {
             }
             return super.visitTagClosing(tagClosing, jobs);
         }
-
 
         @Override
         public Xml.Attribute visitAttribute(Xml.Attribute attribute, List<Job> jobs) {

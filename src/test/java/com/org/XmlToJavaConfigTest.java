@@ -80,7 +80,7 @@ public class XmlToJavaConfigTest implements RewriteTest {
           java(null,
             """
               test
-              """, s -> s.path("src/main/java/test.java"))
+              """, s -> s.path("test.java"))
         );
     }
 }
