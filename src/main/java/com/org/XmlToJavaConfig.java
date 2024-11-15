@@ -81,9 +81,6 @@ public class XmlToJavaConfig extends ScanningRecipe<XmlToJavaConfig.Scanned> {
                 .map(brandNewFile -> (PlainText) brandNewFile.withSourcePath(Paths.get("test.java")))
                 .forEach(generated::add);
 
-        if(Files.exists(Paths.get("test.java"))){
-            System.out.println("OK FILE!!!");
-        }
         return generated;
     }
 
