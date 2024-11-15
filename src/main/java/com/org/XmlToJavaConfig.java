@@ -6,8 +6,7 @@ import com.org.model.batch.Job;
 import com.org.model.batch.Step;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Recipe;
+import org.openrewrite.*;
 import org.openrewrite.xml.XPathMatcher;
 import org.openrewrite.xml.XmlIsoVisitor;
 import org.openrewrite.xml.tree.Xml;
@@ -19,7 +18,12 @@ import java.util.stream.Collectors;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
-public class XmlToJavaConfig extends Recipe {
+public class XmlToJavaConfig extends ScanningRecipe<List<Job>> {
+
+    @Option(displayName = "Relative file path",
+            description = "File path of new file.",
+            example = "foo/bar/baz.xml")
+    String xmlFileName;
 
     @Override
     public String getDisplayName() {
@@ -43,11 +47,13 @@ public class XmlToJavaConfig extends Recipe {
     private static final XPathMatcher STEP_MATCHER = new XPathMatcher("//beans/job/step");
 
     @Override
-    public XmlIsoVisitor<ExecutionContext> getVisitor() {
-        List<Job> jobs = new ArrayList<>();
+    public List<Job> getInitialValue(ExecutionContext ctx) {
+        return new ArrayList<>();
+    }
 
-        return new XmlIsoVisitor<ExecutionContext>(){
-
+    @Override
+    public TreeVisitor<?, ExecutionContext> getScanner(List<Job> jobs) {
+        return new XmlIsoVisitor<ExecutionContext>() {
             @Override
             public Xml.Document visitDocument(Xml.Document document, ExecutionContext executionContext) {
                 BatchJobsVisitor batchJobsVisitor = new BatchJobsVisitor();
@@ -59,6 +65,7 @@ public class XmlToJavaConfig extends Recipe {
     }
 
     public static class BatchJobsVisitor extends XmlIsoVisitor<List<Job>> {
+
         Job job = new Job();
         Step step = new Step();
         List<Bean> beans = new ArrayList<>();

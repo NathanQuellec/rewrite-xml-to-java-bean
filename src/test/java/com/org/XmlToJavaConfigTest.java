@@ -11,7 +11,7 @@ public class XmlToJavaConfigTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new XmlToJavaConfig())
+        spec.recipe(new XmlToJavaConfig("test.xml"))
           .parser(XmlParser.builder());
     }
 
