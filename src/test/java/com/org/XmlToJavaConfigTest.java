@@ -5,6 +5,7 @@ import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 import org.openrewrite.xml.XmlParser;
 
+import static org.openrewrite.java.Assertions.java;
 import static org.openrewrite.xml.Assertions.xml;
 
 public class XmlToJavaConfigTest implements RewriteTest {
@@ -12,7 +13,9 @@ public class XmlToJavaConfigTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new XmlToJavaConfig("test.xml"))
-          .parser(XmlParser.builder());
+          .parser(XmlParser.builder())
+          .cycles(1)
+          .expectedCyclesThatMakeChanges(1);
     }
 
     @Test
@@ -73,7 +76,11 @@ public class XmlToJavaConfigTest implements RewriteTest {
                                   <bean id="personWriter" class="org.example.PersonItemWriter"/>
                               </beans>
               """
-          )
+          ),
+          java(null,
+            """
+              test
+              """, s -> s.path("src/main/java/test.java"))
         );
     }
 }

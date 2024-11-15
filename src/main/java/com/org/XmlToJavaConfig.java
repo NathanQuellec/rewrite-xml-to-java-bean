@@ -7,13 +7,17 @@ import com.org.model.batch.Step;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
+import org.openrewrite.java.JavaParser;
+import org.openrewrite.java.tree.JavaSourceFile;
+import org.openrewrite.text.PlainText;
+import org.openrewrite.text.PlainTextParser;
 import org.openrewrite.xml.XPathMatcher;
 import org.openrewrite.xml.XmlIsoVisitor;
 import org.openrewrite.xml.tree.Xml;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Value
@@ -62,6 +66,20 @@ public class XmlToJavaConfig extends ScanningRecipe<List<Job>> {
                 return super.visitDocument(document, executionContext);
             }
         };
+    }
+
+    @Override
+    public Collection<PlainText> generate(List<Job> jobs, ExecutionContext ctx) {
+        List<PlainText> generated = new LinkedList<>();
+        PlainTextParser parser = new PlainTextParser();
+        parser.parse("test")
+                .map(brandNewFile -> (PlainText) brandNewFile.withSourcePath(Paths.get("src", "main", "java", "test.java")))
+                .forEach(generated::add);
+
+        if(Files.exists(Paths.get("src", "main", "java", "test.java"))){
+            System.out.println("OK FILE!!!");
+        }
+        return generated;
     }
 
     public static class BatchJobsVisitor extends XmlIsoVisitor<List<Job>> {
