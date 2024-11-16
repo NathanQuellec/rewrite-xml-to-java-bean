@@ -10,6 +10,9 @@ import org.openrewrite.ExecutionContext;
 import org.openrewrite.Option;
 import org.openrewrite.ScanningRecipe;
 import org.openrewrite.TreeVisitor;
+import org.openrewrite.java.JavaParser;
+import org.openrewrite.java.JavaTemplate;
+import org.openrewrite.java.tree.JavaSourceFile;
 import org.openrewrite.text.PlainText;
 import org.openrewrite.text.PlainTextParser;
 import org.openrewrite.xml.XPathMatcher;
@@ -74,11 +77,51 @@ public class XmlToJavaConfig extends ScanningRecipe<XmlToJavaConfig.Scanned> {
     }
 
     @Override
-    public Collection<PlainText> generate(Scanned acc, ExecutionContext ctx) {
-        List<PlainText> generated = new LinkedList<>();
-        PlainTextParser parser = new PlainTextParser();
-        parser.parse("test")
-                .map(brandNewFile -> (PlainText) brandNewFile.withSourcePath(Paths.get("test.java")))
+    public Collection<JavaSourceFile> generate(Scanned acc, ExecutionContext ctx) {
+        List<JavaSourceFile> generated = new LinkedList<>();
+
+
+        JavaParser parser = JavaParser
+                .fromJavaVersion()
+                .build();
+        parser.parse(
+                "package org.example.config;\n\n" +
+                        "import org.springframework.batch.core.Job;\n" +
+                        "import org.springframework.batch.core.Step;\n" +
+                        "import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;\n" +
+                        "import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;\n" +
+                        "import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;\n" +
+                        "import org.springframework.context.annotation.Bean;\n" +
+                        "import org.springframework.context.annotation.Configuration;\n\n" +
+
+                        "@Configuration\n" +
+                        "@EnableBatchProcessing\n" +
+                        "public class PersonJobConfig {\n\n" +
+
+                        "    private final JobBuilderFactory jobBuilderFactory;\n" +
+                        "    private final StepBuilderFactory stepBuilderFactory;\n\n" +
+
+                        "    public PersonJobConfig(JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory) {\n" +
+                        "        this.jobBuilderFactory = jobBuilderFactory;\n" +
+                        "        this.stepBuilderFactory = stepBuilderFactory;\n" +
+                        "    }\n\n" +
+
+                        "    @Bean\n" +
+                        "    public Step personStep() {\n" +
+                        "        return stepBuilderFactory.get(\"personStep\")\n" +
+                        "                .chunk(1)\n" +
+                        "                .build();\n" +
+                        "    }\n\n" +
+
+                        "    @Bean\n" +
+                        "    public Job personJob(Step personStep) {\n" +
+                        "        return jobBuilderFactory.get(\"personJob\")\n" +
+                        "                .start(personStep)\n" +
+                        "                .build();\n" +
+                        "    }\n" +
+                        "}"
+        )
+                .map(brandNewFile -> (JavaSourceFile) brandNewFile.withSourcePath(Paths.get("test.java")))
                 .forEach(generated::add);
 
         return generated;

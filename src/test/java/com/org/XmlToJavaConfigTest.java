@@ -79,7 +79,42 @@ public class XmlToJavaConfigTest implements RewriteTest {
           ),
           java(null,
             """
-              test
+              package org.example.config;
+              
+              import org.springframework.batch.core.Job;
+              import org.springframework.batch.core.Step;
+              import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+              import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+              import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+              import org.springframework.context.annotation.Bean;
+              import org.springframework.context.annotation.Configuration;
+              
+              @Configuration
+              @EnableBatchProcessing
+              public class PersonJobConfig {
+           
+                  private final JobBuilderFactory jobBuilderFactory;
+                  private final StepBuilderFactory stepBuilderFactory;
+              
+                  public PersonJobConfig(JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory) {
+                      this.jobBuilderFactory = jobBuilderFactory;
+                      this.stepBuilderFactory = stepBuilderFactory;
+                  }
+              
+                  @Bean
+                  public Step personStep() {
+                      return stepBuilderFactory.get("personStep")
+                              .chunk(1)
+                              .build();
+                  }
+              
+                  @Bean
+                  public Job personJob(Step personStep) {
+                      return jobBuilderFactory.get("personJob")
+                              .start(personStep)
+                              .build();
+                  }
+              }
               """, s -> s.path("test.java"))
         );
     }
