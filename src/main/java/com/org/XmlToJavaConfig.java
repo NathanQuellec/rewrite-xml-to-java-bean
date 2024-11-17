@@ -83,6 +83,7 @@ public class XmlToJavaConfig extends ScanningRecipe<XmlToJavaConfig.Scanned> {
         parser.parse(
                 "package org.example.config;\n\n" +
                         acc.jobs.get(0).withJobImports() + "\n" +
+                        "import org.example.Person;\n" +
                         "import org.springframework.batch.core.Job;\n" +
                         "import org.springframework.batch.core.Step;\n" +
                         "import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;\n" +
@@ -103,7 +104,7 @@ public class XmlToJavaConfig extends ScanningRecipe<XmlToJavaConfig.Scanned> {
                         "        this.stepBuilderFactory = stepBuilderFactory;\n" +
                         "    }\n\n" +
 
-                        acc.jobs.get(0).withStepMethods() +
+                                acc.jobs.get(0).withStepMethods() +
 
                         "    @Bean\n" +
                         "    public Job "+acc.jobs.get(0).getName()+"("+acc.jobs.get(0).withMethodParams()+") {\n" +

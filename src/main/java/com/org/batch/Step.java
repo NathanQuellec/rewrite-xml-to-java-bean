@@ -7,9 +7,7 @@ import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.openrewrite.jgit.annotations.Nullable;
 
-import java.util.AbstractMap;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,6 +25,7 @@ public class Step implements IBatch {
     private AbstractMap.SimpleEntry<String,Bean> writer;
     @Nullable
     private String commitInterval;
+
 
     public void setBeanRef(String key, AbstractMap.SimpleEntry<String, Bean> beanRef) {
         switch(key){
@@ -57,13 +56,39 @@ public class Step implements IBatch {
                 .collect(Collectors.joining("\n"));
     }
 
-    private String stepBuilderFactoryLines(){
-        StringBuilder factoryLines = new StringBuilder();
-        if(batchType.equals(BatchType.CHUNK)){
-            factoryLines.append(".chunk<>(").append(commitInterval).append(")\n");
+    private String chunkLine(String batchProcessType, AbstractMap.SimpleEntry<String, Bean> batchProcess){
+        return "." + batchProcessType + "(" +
+                StringUtils.uncapitalize(batchProcess.getValue().getBeanClassName()) +
+                ")\n";
+    }
 
-        }
-        return "";
+    private Map<AbstractMap.SimpleEntry<String,Bean>, String> buildBeanLabels(){
+        return new HashMap<AbstractMap.SimpleEntry<String,Bean>, String>() {{
+            put(reader, "reader");
+            put(processor, "processor");
+            put(writer, "writer");
+        }};
+    }
+
+    private String chunkStepLines(){
+        Map<AbstractMap.SimpleEntry<String,Bean>, String> beanLabels = buildBeanLabels();
+        StringBuilder factoryLines = new StringBuilder();
+
+        factoryLines.append("                ")
+                .append(".<Person, Person>chunk(")
+                .append(commitInterval)
+                .append(")\n");
+        Stream.of(reader, processor, writer)
+                .filter(Objects::nonNull)
+                .forEach(batchProcess -> factoryLines.append("                ")
+                                .append(chunkLine(beanLabels.get(batchProcess), batchProcess))
+                );
+
+        return factoryLines.toString();
+    }
+
+    private String stepBuilderFactoryLines(){
+        return batchType.equals(BatchType.CHUNK) ? chunkStepLines() : "";
     }
 
     private String methodParameters(){
@@ -78,10 +103,7 @@ public class Step implements IBatch {
         return  "    @Bean\n" +
                 "    public Step "+name+"("+methodParameters()+") {\n" +
                 "        return stepBuilderFactory.get(\"personStep\")\n" +
-                "                .<Person, Person>chunk(1)\n" +
-                "                .reader(personReader)\n" +
-                "                .processor(personItemProcessor)\n" +
-                "                .writer(personItemWriter)\n" +
+                                stepBuilderFactoryLines() +
                 "                .build();\n" +
                 "    }\n";
     }

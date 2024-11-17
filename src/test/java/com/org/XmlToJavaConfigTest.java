@@ -84,6 +84,7 @@ public class XmlToJavaConfigTest implements RewriteTest {
               import org.springframework.batch.item.file.FlatFileItemReader;
               import org.example.PersonItemProcessor;
               import org.example.PersonItemWriter;
+              import org.example.Person;
               import org.springframework.batch.core.Job;
               import org.springframework.batch.core.Step;
               import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -105,12 +106,14 @@ public class XmlToJavaConfigTest implements RewriteTest {
                   }
               
                   @Bean
-                  public Step personStep() {
+                  public Step personStep(FlatFileItemReader flatFileItemReader, PersonItemProcessor personItemProcessor, PersonItemWriter personItemWriter) {
                       return stepBuilderFactory.get("personStep")
-                              .chunk(1)
+                              .<Person, Person>chunk(1)
+                              .reader(flatFileItemReader)
+                              .processor(personItemProcessor)
+                              .writer(personItemWriter)
                               .build();
                   }
-              
                   @Bean
                   public Job personJob(Step personStep) {
                       return jobBuilderFactory.get("personJob")
