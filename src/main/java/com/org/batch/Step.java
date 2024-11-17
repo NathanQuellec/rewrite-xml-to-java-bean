@@ -67,7 +67,6 @@ public class Step implements IBatch {
     }
 
     private String methodParameters(){
-        String test = Objects.toString(reader);
         return Stream.of(reader, processor, writer)
                 .filter(Objects::nonNull)
                 .map(bean -> bean.getValue().getBeanClassName() + " " +
