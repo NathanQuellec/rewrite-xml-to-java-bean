@@ -1,4 +1,4 @@
-package com.org.model.batch;
+package com.org.batch;
 
 public interface IBatch {
     String getName();

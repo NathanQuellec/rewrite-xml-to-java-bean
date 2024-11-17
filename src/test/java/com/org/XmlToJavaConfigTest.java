@@ -81,6 +81,9 @@ public class XmlToJavaConfigTest implements RewriteTest {
             """
               package org.example.config;
               
+              import org.springframework.batch.item.file.FlatFileItemReader;
+              import org.example.PersonItemProcessor;
+              import org.example.PersonItemWriter;
               import org.springframework.batch.core.Job;
               import org.springframework.batch.core.Step;
               import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;

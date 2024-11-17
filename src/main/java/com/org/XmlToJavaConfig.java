@@ -1,9 +1,10 @@
 package com.org;
 
+import com.org.enums.BatchType;
 import com.org.model.Bean;
-import com.org.model.batch.IBatch;
-import com.org.model.batch.Job;
-import com.org.model.batch.Step;
+import com.org.batch.IBatch;
+import com.org.batch.Job;
+import com.org.batch.Step;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.ExecutionContext;
@@ -11,18 +12,13 @@ import org.openrewrite.Option;
 import org.openrewrite.ScanningRecipe;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.tree.JavaSourceFile;
-import org.openrewrite.text.PlainText;
-import org.openrewrite.text.PlainTextParser;
 import org.openrewrite.xml.XPathMatcher;
 import org.openrewrite.xml.XmlIsoVisitor;
 import org.openrewrite.xml.tree.Xml;
 
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
@@ -86,6 +82,7 @@ public class XmlToJavaConfig extends ScanningRecipe<XmlToJavaConfig.Scanned> {
                 .build();
         parser.parse(
                 "package org.example.config;\n\n" +
+                        acc.jobs.get(0).withJobImports() + "\n" +
                         "import org.springframework.batch.core.Job;\n" +
                         "import org.springframework.batch.core.Step;\n" +
                         "import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;\n" +
@@ -106,12 +103,7 @@ public class XmlToJavaConfig extends ScanningRecipe<XmlToJavaConfig.Scanned> {
                         "        this.stepBuilderFactory = stepBuilderFactory;\n" +
                         "    }\n\n" +
 
-                        "    @Bean\n" +
-                        "    public Step personStep() {\n" +
-                        "        return stepBuilderFactory.get(\"personStep\")\n" +
-                        "                .chunk(1)\n" +
-                        "                .build();\n" +
-                        "    }\n\n" +
+                        acc.jobs.get(0).withStepMethods() +
 
                         "    @Bean\n" +
                         "    public Job "+acc.jobs.get(0).getName()+"("+acc.jobs.get(0).withMethodParams()+") {\n" +
@@ -194,6 +186,7 @@ public class XmlToJavaConfig extends ScanningRecipe<XmlToJavaConfig.Scanned> {
                         .ifPresent(beanRef::setValue);
 
                 step.setBeanRef(attributeKey, beanRef);
+                step.setBatchType(BatchType.CHUNK);
             }
             if(attributeKey.equals("commit-interval")) {
                 System.out.println("FIND COMMIT INTERVAL!!!! " + attributeValue);
@@ -222,7 +215,7 @@ public class XmlToJavaConfig extends ScanningRecipe<XmlToJavaConfig.Scanned> {
                     if ("id".equals(attributeName)) {
                         bean.setName(attributeValue);
                     } else if ("class".equals(attributeName)) {
-                        bean.setBeanClass(attributeValue);
+                        bean.setBeanClassPath(attributeValue);
                     }
                 });
                 beans.add(bean);

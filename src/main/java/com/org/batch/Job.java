@@ -1,4 +1,4 @@
-package com.org.model.batch;
+package com.org.batch;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Getter
@@ -25,6 +26,19 @@ public class Job implements IBatch {
         return steps.stream()
                 .map(step -> "Step " + step.getName())
                 .collect(Collectors.joining(", "));
+    }
+
+    public String withJobImports(){
+        return steps.stream()
+                .map(Step::withStepImports)
+                .collect(Collectors.joining("\n"));
+    }
+
+    public String withStepMethods(){
+        return steps.stream()
+                .filter(Objects::nonNull)
+                .map(Step::withMethod)
+                .collect(Collectors.joining("\n"));
     }
 
 }
