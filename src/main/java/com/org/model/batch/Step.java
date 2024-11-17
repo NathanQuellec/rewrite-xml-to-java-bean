@@ -7,6 +7,7 @@ import org.openrewrite.jgit.annotations.Nullable;
 
 import java.util.AbstractMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -37,7 +38,21 @@ public class Step implements IBatch {
         }
     }
 
+    private String withGenericImport(AbstractMap.SimpleEntry<String,Bean> obj) {
+        return Optional.ofNullable(obj)
+                .map(o -> "import " + o.getValue().getBeanClass() + ";")
+                .orElse(null);
+    }
+
     public String withReaderImport(){
-        return "import " + reader.getValue().getBeanClass() + ";";
+        return withGenericImport(reader);
+    }
+
+    public String withProcessorImport(){
+        return withGenericImport(processor);
+    }
+
+    public String withWriterImport(){
+        return withGenericImport(writer);
     }
 }
