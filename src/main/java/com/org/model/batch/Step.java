@@ -9,6 +9,7 @@ import java.util.Map;
 
 @Getter
 @Setter
+// TODO : Add method to generate java code from reader, process, writer,...
 public class Step implements IBatch {
     private String name;
     @Nullable

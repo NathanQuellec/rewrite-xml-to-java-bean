@@ -96,12 +96,12 @@ public class XmlToJavaConfig extends ScanningRecipe<XmlToJavaConfig.Scanned> {
 
                         "@Configuration\n" +
                         "@EnableBatchProcessing\n" +
-                        "public class PersonJobConfig {\n\n" +
+                        "public class "+acc.jobs.get(0).withClassName()+" {\n\n" +
 
                         "    private final JobBuilderFactory jobBuilderFactory;\n" +
                         "    private final StepBuilderFactory stepBuilderFactory;\n\n" +
 
-                        "    public PersonJobConfig(JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory) {\n" +
+                        "    public "+acc.jobs.get(0).withClassName()+"(JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory) {\n" +
                         "        this.jobBuilderFactory = jobBuilderFactory;\n" +
                         "        this.stepBuilderFactory = stepBuilderFactory;\n" +
                         "    }\n\n" +
@@ -114,14 +114,14 @@ public class XmlToJavaConfig extends ScanningRecipe<XmlToJavaConfig.Scanned> {
                         "    }\n\n" +
 
                         "    @Bean\n" +
-                        "    public Job personJob(Step personStep) {\n" +
-                        "        return jobBuilderFactory.get(\"personJob\")\n" +
+                        "    public Job "+acc.jobs.get(0).getName()+"("+acc.jobs.get(0).withMethodParams()+") {\n" +
+                        "        return jobBuilderFactory.get(\""+acc.jobs.get(0).getName()+"\")\n" +
                         "                .start(personStep)\n" +
                         "                .build();\n" +
                         "    }\n" +
                         "}"
         )
-                .map(brandNewFile -> (JavaSourceFile) brandNewFile.withSourcePath(Paths.get("test.java")))
+                .map(brandNewFile -> (JavaSourceFile) brandNewFile.withSourcePath(Paths.get(acc.jobs.get(0).withClassName()+".java")))
                 .forEach(generated::add);
 
         return generated;

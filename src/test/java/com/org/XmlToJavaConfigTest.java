@@ -45,7 +45,7 @@ public class XmlToJavaConfigTest implements RewriteTest {
                                   </bean>
               
                                   <batch:job id="personJob">
-                                      <batch:step id="step1">
+                                      <batch:step id="personStep">
                                           <batch:tasklet>
                                               <batch:chunk reader="personReader" processor="personProcessor" writer="personWriter" commit-interval="1"/>
                                           </batch:tasklet>
@@ -115,7 +115,7 @@ public class XmlToJavaConfigTest implements RewriteTest {
                               .build();
                   }
               }
-              """, s -> s.path("test.java"))
+              """, s -> s.path("PersonJobConfig.java"))
         );
     }
 }
