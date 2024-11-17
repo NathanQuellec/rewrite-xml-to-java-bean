@@ -187,9 +187,12 @@ public class XmlToJavaConfig extends ScanningRecipe<XmlToJavaConfig.Scanned> {
 
             if(attributeKey.matches("reader|processor|writer")) {
                 System.out.println("FIND " + attributeValue + " !!!");
-                Map<String, Bean> beanRef = beans.stream()
+                AbstractMap.SimpleEntry<String, Bean> beanRef = new AbstractMap.SimpleEntry<>(attributeValue, new Bean());
+                beans.stream()
                         .filter(b -> b.getName().equals(attributeValue))
-                        .collect(Collectors.toMap(b -> attributeValue, b -> b));
+                        .findFirst()
+                        .ifPresent(beanRef::setValue);
+
                 step.setBeanRef(attributeKey, beanRef);
             }
             if(attributeKey.equals("commit-interval")) {

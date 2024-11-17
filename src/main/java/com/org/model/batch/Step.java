@@ -5,23 +5,23 @@ import lombok.Getter;
 import lombok.Setter;
 import org.openrewrite.jgit.annotations.Nullable;
 
+import java.util.AbstractMap;
 import java.util.Map;
 
 @Getter
 @Setter
-// TODO : Add method to generate java code from reader, process, writer,...
 public class Step implements IBatch {
     private String name;
     @Nullable
-    private Map<String, Bean> reader;
+    private AbstractMap.SimpleEntry<String, Bean> reader;
     @Nullable
-    private Map<String,Bean> processor;
+    private AbstractMap.SimpleEntry<String,Bean> processor;
     @Nullable
-    private Map<String,Bean> writer;
+    private AbstractMap.SimpleEntry<String,Bean> writer;
     @Nullable
     private String commitInterval;
 
-    public void setBeanRef(String key, Map<String, Bean> beanRef) {
+    public void setBeanRef(String key, AbstractMap.SimpleEntry<String, Bean> beanRef) {
         switch(key){
             case "reader":
                 reader = beanRef;
@@ -35,5 +35,9 @@ public class Step implements IBatch {
             default:
                 break;
         }
+    }
+
+    public String withReaderImport(){
+        return "import " + reader.getValue().getBeanClass() + ";";
     }
 }
