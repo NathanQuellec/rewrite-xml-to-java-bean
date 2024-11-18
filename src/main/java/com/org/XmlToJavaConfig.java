@@ -103,6 +103,7 @@ public class XmlToJavaConfig extends ScanningRecipe<XmlToJavaConfig.Scanned> {
                         "        this.jobBuilderFactory = jobBuilderFactory;\n" +
                         "        this.stepBuilderFactory = stepBuilderFactory;\n" +
                         "    }\n\n" +
+                                acc.jobs.get(0).stepBeans() +
 
                                 acc.jobs.get(0).withStepMethods() +
 

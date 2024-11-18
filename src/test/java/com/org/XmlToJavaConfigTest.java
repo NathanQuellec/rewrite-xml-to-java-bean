@@ -104,7 +104,21 @@ public class XmlToJavaConfigTest implements RewriteTest {
                       this.jobBuilderFactory = jobBuilderFactory;
                       this.stepBuilderFactory = stepBuilderFactory;
                   }
+                  
+                  @Bean
+                  public FlatFileItemReader flatFileItemReader() {
+                      return new FlatFileItemReader();
+                  }
+            
+                  @Bean
+                  public PersonItemProcessor personItemProcessor() {
+                      return new PersonItemProcessor();
+                  }
               
+                  @Bean
+                  public PersonItemWriter personItemWriter() {
+                      return new PersonItemWriter();
+                  }         
                   @Bean
                   public Step personStep(FlatFileItemReader flatFileItemReader, PersonItemProcessor personItemProcessor, PersonItemWriter personItemWriter) {
                       return stepBuilderFactory.get("personStep")

@@ -56,6 +56,20 @@ public class Step implements IBatch {
                 .collect(Collectors.joining("\n"));
     }
 
+    /*
+    construct methods that returns new objects for reader,processor and writer
+     */
+    public String beanMethods(){
+        return Stream.of(reader, processor, writer)
+                .filter(Objects::nonNull)
+                .map(obj ->
+                        String.format("    @Bean\n" +
+                        "    public %1$s %2$s() {\n" +
+                        "        return new %1$s();\n" +
+                        "    }\n", obj.getValue().getBeanClassName(), StringUtils.uncapitalize(obj.getValue().getBeanClassName())))
+                .collect(Collectors.joining("\n"));
+    }
+
     private String chunkLine(String batchProcessType, AbstractMap.SimpleEntry<String, Bean> batchProcess){
         return "." + batchProcessType + "(" +
                 StringUtils.uncapitalize(batchProcess.getValue().getBeanClassName()) +

@@ -41,4 +41,11 @@ public class Job implements IBatch {
                 .collect(Collectors.joining("\n"));
     }
 
+    public String stepBeans(){
+        return steps.stream()
+                .filter(Objects::nonNull)
+                .map(Step::beanMethods)
+                .collect(Collectors.joining("\n"));
+    }
+
 }
